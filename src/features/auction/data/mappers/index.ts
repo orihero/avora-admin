@@ -1,0 +1,6 @@
+export { mapAuctionDocumentDTOToEntity } from './auctionMapper'
+export { mapAuctionProductDocumentDTOToEntity } from './auctionProductMapper'
+export { mapParticipationRequestDocumentToEntity } from './participationRequestMapper'
+export { mapVoteDocumentDTOToEntity } from './voteMapper'
+export { mapBidDocumentDTOToEntity } from './bidMapper'
+export { mapWinnerConfirmationDocumentDTOToEntity } from './winnerConfirmationMapper'

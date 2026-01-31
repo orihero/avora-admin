@@ -1,0 +1,1 @@
+export { mapProductDocumentDTOToEntity } from './productMapper'
