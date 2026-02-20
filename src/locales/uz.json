@@ -6,6 +6,8 @@
     "groupSettings": "SOZLAMALAR",
     "analytics": "Analitika",
     "auction": "Auksion",
+    "categories": "Kategoriyalar",
+    "users": "Foydalanuvchilar",
     "participationRequests": "Qatnashish so'rovlari",
     "systemConfigurations": "Tizim sozlamalari"
   },
@@ -35,6 +37,9 @@
     "auctionsIllustrationAlt": "Auksion ma'lumotlari illyustratsiyasi",
     "breadcrumbData": "Ma'lumotlar",
     "breadcrumbAuctions": "Auksionlar",
+    "categories": "Kategoriyalar",
+    "breadcrumbCategories": "Kategoriyalar",
+    "categoriesIllustrationAlt": "Kategoriyalar illyustratsiyasi",
     "systemConfigurations": "Tizim sozlamalari",
     "breadcrumbSettings": "Sozlamalar",
     "breadcrumbSystemConfigurations": "Tizim sozlamalari",
@@ -63,6 +68,21 @@
     "auctionDetailsWinnerStatus_payment_failed": "To'lov amalga oshmadi",
     "auctionDetailsWinnerStatus_unreachable": "Murojaat qilish mumkin emas",
     "participationRequests": "Qatnashish so'rovlari",
-    "participationRequestsIllustrationAlt": "Qatnashish so'rovlari illyustratsiyasi"
+    "participationRequestsIllustrationAlt": "Qatnashish so'rovlari illyustratsiyasi",
+    "users": "Foydalanuvchilar",
+    "breadcrumbUsers": "Foydalanuvchilar",
+    "usersIllustrationAlt": "Foydalanuvchilar illyustratsiyasi",
+    "usersCreateUser": "Foydalanuvchi qo'shish",
+    "usersEditUser": "Foydalanuvchini tahrirlash",
+    "usersDeleteUser": "Foydalanuvchini o'chirish",
+    "usersPhoneNumber": "Telefon raqami",
+    "usersRole": "Rol",
+    "usersFirstName": "Ism",
+    "usersLastName": "Familiya",
+    "usersDateOfBirth": "Tug'ilgan sana",
+    "usersAvatarUrl": "Avatar URL",
+    "usersRoleAdmin": "Admin",
+    "usersRoleUser": "Foydalanuvchi",
+    "usersDeleteConfirm": "Ushbu foydalanuvchini o'chirishni xohlaysizmi?"
   }
 }

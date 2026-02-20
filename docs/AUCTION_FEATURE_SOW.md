@@ -15,7 +15,7 @@ The Auction Feature enables the platform to run **curated, scheduled, live aucti
 
 This document defines the **complete functional scope, rules, states, edge cases, and responsibilities** of the Auction Feature. It serves as the **single source of truth** for product, design, backend, and QA.
 
-No technical or implementation details are included.
+Sections 1–16 are non-technical. **Section 17** is an implementation snapshot (backend schema and admin app scope) aligned with the current codebase and Appwrite project.
 
 ---
 
@@ -344,6 +344,72 @@ The Auction Feature is considered complete when:
 * Admin control and restrictions are respected
 * Users cannot bypass voting, participation, or bidding rules
 * Auction outcomes are deterministic and auditable
+
+---
+
+## 17. Implementation (Current)
+
+This section reflects the **current implementation**: Appwrite backend schema and the **avora-admin** app scope. It is kept in sync with the codebase and Appwrite project (avora).
+
+### 17.1 Backend: Appwrite Database
+
+* **Project:** avora  
+* **Database:** `avora_db` (single database)  
+* **Tables (collections):**
+
+| Table ID | Purpose |
+|----------|--------|
+| `auctions` | Auction metadata, status, progress, dates |
+| `auction_products` | Products in an auction; link auction ↔ product; `selectedForLive`, `minBidPrice`, `sortOrder`, `price_increment_presets` |
+| `votes` | User votes per auction + product; `userId`, `updatedAt` |
+| `participation_requests` | Per-product participation; `phoneNumber`, `status`, `termsAccepted`, `reviewedAt`; relations: `auction`, `product`, `user` (user_profiles) |
+| `bids` | Bids per auction + product; `userId`, `phoneNumber`, `amount`, `fallbackRank`, `createdAt` |
+| `winner_confirmation` | Winner/fallback state per product; `userId`, `status`, `confirmedAt`, `fallbackRank` |
+| `products` | Product catalog; `name`, `brand`, `imageUrl`, `category`, `price`, `auctionRelated` |
+| `categories` | Product categories; `name` |
+| `variables` | Configurable variables (e.g. auction video URL); `key`, `value`, `type`, optional `feature` |
+| `features` | Feature flags / names; `name` |
+| `user_profiles` | User profile and role; `authId`, `role`, `phoneNumber`, etc. |
+
+* **Auction status (enum):** `draft` \| `scheduled` \| `active` \| `completed` \| `cancelled`  
+* **Auction progress (enum):** `voting_open` \| `voting_closed` \| `participation_approval` \| `live_auction` \| `winner_confirmation` \| `fallback_resolution`  
+* **Participation request status (enum):** `pending` \| `approved` \| `declined`  
+* **Winner confirmation status (enum):** `pending_confirmation` \| `confirmed` \| `rejected` \| `payment_failed` \| `unreachable`  
+
+Relationships: `auction_products` → `auctions`, `products`; `votes`, `participation_requests`, `bids`, `winner_confirmation` → `auctions` and `products`; `participation_requests` → `user_profiles`.
+
+### 17.2 Admin App (avora-admin)
+
+* **Stack:** React, TypeScript, Vite, TailwindCSS, React Query, React Router, Appwrite SDK, i18n (en, ru, uz).  
+* **Auth:** Protected routes; admin uses Appwrite Auth + `user_profiles` (role).  
+* **Routes:**
+
+| Path | Page | Description |
+|------|------|-------------|
+| `/` | Dashboard | Analytics placeholder |
+| `/auction` | Auction list | List auctions; create auction (with products); edit; delete |
+| `/auction/:id` | Auction details | View auction; status/progress badges; products list with vote counts, participation counts, bids/winner by phase |
+| `/auction/:id/participation-requests` | Participation requests | List requests; approve/decline |
+| `/settings/system-configurations` | System configurations | Variables (key/value) |
+
+* **Implemented (admin):**
+  * List/create/update/delete auctions (title, description, startAt, votingEndAt, status, progress).  
+  * Create auction with products in one flow (products selection, minBidPrice, sortOrder).  
+  * List auction products; display vote counts, participation counts (approved/pending), highest bid and bid count, winner confirmation status by phase.  
+  * List participation requests per auction; update status (approve/decline).  
+  * Featured auction in sidebar: first active, else first completed, else first scheduled.  
+  * No admin UI for: placing/editing votes, placing bids, creating/editing winner_confirmation rows (read-only display).  
+
+* **Environment:** Collection IDs are required in `.env`: `VITE_APPWRITE_DATABASE_ID`, `VITE_APPWRITE_AUCTIONS_COLLECTION_ID`, `VITE_APPWRITE_AUCTION_PRODUCTS_COLLECTION_ID`, `VITE_APPWRITE_PRODUCTS_COLLECTION_ID`, `VITE_APPWRITE_VOTES_COLLECTION_ID`, `VITE_APPWRITE_PARTICIPATION_REQUESTS_COLLECTION_ID`, `VITE_APPWRITE_BIDS_COLLECTION_ID`, `VITE_APPWRITE_WINNER_CONFIRMATION_COLLECTION_ID`, `VITE_APPWRITE_VARIABLES_COLLECTION_ID` (and endpoint/project).
+
+### 17.3 Alignment with SOW
+
+* **Status and progress:** Implemented enums match §3.2 and §3.3.  
+* **Auction structure:** One active auction; weekly creation is policy, not enforced by schema.  
+* **Voting:** Stored per (auction, product, user); admin sees counts and product list; resolution (select product / cancel category) is admin-driven via `auction_products.selectedForLive` (and category cancellation if modeled).  
+* **Participation:** Per-product; approve/decline in admin; `participation_requests` links to `user_profiles`.  
+* **Bids and winner confirmation:** Stored and displayed in admin; live bidding and winner/fallback flows are client-app concerns; admin does not override winner.  
+* **Dynamic content:** Variables (and optional feature) support configurable content (§5).
 
 ---
 

@@ -1,0 +1,1 @@
+export { mapUserProfileDocumentDTOToEntity } from './userProfileMapper'

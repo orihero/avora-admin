@@ -15,6 +15,9 @@ import { AppwriteVariablesDataSource } from '@/features/settings/data/datasource
 import type { ProductRepository } from '@/features/products/domain/repositories'
 import { ProductRepositoryImpl } from '@/features/products/data/repositories'
 import { AppwriteProductDataSource } from '@/features/products/data/datasources'
+import type { CategoryRepository } from '@/features/categories/domain/repositories'
+import { CategoryRepositoryImpl } from '@/features/categories/data/repositories'
+import { AppwriteCategoryDataSource } from '@/features/categories/data/datasources'
 import type {
   AuctionProductRepository,
   AuctionStatsRepository,
@@ -32,10 +35,15 @@ import {
   AppwriteVotesDataSource,
   AppwriteWinnerConfirmationDataSource,
 } from '@/features/auction/data/datasources'
+import type { UserProfileRepository } from '@/features/users/domain/repositories'
+import { UserProfileRepositoryImpl } from '@/features/users/data/repositories'
+import { AppwriteUserProfileDataSource } from '@/features/users/data/datasources'
 
 export const AUCTION_REPOSITORY_TOKEN = 'AuctionRepository'
+export const USER_PROFILE_REPOSITORY_TOKEN = 'UserProfileRepository'
 export const VARIABLES_REPOSITORY_TOKEN = 'VariablesRepository'
 export const PRODUCT_REPOSITORY_TOKEN = 'ProductRepository'
+export const CATEGORY_REPOSITORY_TOKEN = 'CategoryRepository'
 export const AUCTION_PRODUCT_REPOSITORY_TOKEN = 'AuctionProductRepository'
 export const PARTICIPATION_REQUEST_REPOSITORY_TOKEN = 'ParticipationRequestRepository'
 export const AUCTION_STATS_REPOSITORY_TOKEN = 'AuctionStatsRepository'
@@ -75,6 +83,17 @@ container.register<VariablesRepository>(VARIABLES_REPOSITORY_TOKEN, {
 container.registerSingleton(AppwriteProductDataSource)
 container.register<ProductRepository>(PRODUCT_REPOSITORY_TOKEN, {
   useFactory: (c) => new ProductRepositoryImpl(c.resolve(AppwriteProductDataSource)),
+})
+
+container.registerSingleton(AppwriteCategoryDataSource)
+container.register<CategoryRepository>(CATEGORY_REPOSITORY_TOKEN, {
+  useFactory: (c) => new CategoryRepositoryImpl(c.resolve(AppwriteCategoryDataSource)),
+})
+
+container.registerSingleton(AppwriteUserProfileDataSource)
+container.register<UserProfileRepository>(USER_PROFILE_REPOSITORY_TOKEN, {
+  useFactory: (c) =>
+    new UserProfileRepositoryImpl(c.resolve(AppwriteUserProfileDataSource)),
 })
 
 container.registerSingleton(AppwriteAuctionProductDataSource)

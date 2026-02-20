@@ -6,6 +6,8 @@
     "groupSettings": "SETTINGS",
     "analytics": "Analytics",
     "auction": "Auction",
+    "categories": "Categories",
+    "users": "Users",
     "participationRequests": "Participation requests",
     "systemConfigurations": "System configurations"
   },
@@ -35,6 +37,9 @@
     "auctionsIllustrationAlt": "Auctions data illustration",
     "breadcrumbData": "Data",
     "breadcrumbAuctions": "Auctions",
+    "categories": "Categories",
+    "breadcrumbCategories": "Categories",
+    "categoriesIllustrationAlt": "Categories illustration",
     "systemConfigurations": "System configurations",
     "breadcrumbSettings": "Settings",
     "breadcrumbSystemConfigurations": "System configurations",
@@ -63,6 +68,21 @@
     "auctionDetailsWinnerStatus_payment_failed": "Payment failed",
     "auctionDetailsWinnerStatus_unreachable": "Unreachable",
     "participationRequests": "Participation requests",
-    "participationRequestsIllustrationAlt": "Participation requests illustration"
+    "participationRequestsIllustrationAlt": "Participation requests illustration",
+    "users": "Users",
+    "breadcrumbUsers": "Users",
+    "usersIllustrationAlt": "Users illustration",
+    "usersCreateUser": "Create user",
+    "usersEditUser": "Edit user",
+    "usersDeleteUser": "Delete user",
+    "usersPhoneNumber": "Phone number",
+    "usersRole": "Role",
+    "usersFirstName": "First name",
+    "usersLastName": "Last name",
+    "usersDateOfBirth": "Date of birth",
+    "usersAvatarUrl": "Avatar URL",
+    "usersRoleAdmin": "Admin",
+    "usersRoleUser": "User",
+    "usersDeleteConfirm": "Are you sure you want to delete this user?"
   }
 }

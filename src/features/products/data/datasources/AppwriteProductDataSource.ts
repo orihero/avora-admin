@@ -1,5 +1,10 @@
-import { ID } from 'appwrite'
-import { databases, AVORA_DATABASE_ID, PRODUCTS_COLLECTION_ID } from '@/core/appwrite/client'
+import { ID, type Models } from 'appwrite'
+import {
+  databases,
+  tablesDbListRows,
+  AVORA_DATABASE_ID,
+  PRODUCTS_COLLECTION_ID,
+} from '@/core/appwrite/client'
 
 /** Payload for creating a product document (Appwrite adds $id, $createdAt, $updatedAt). */
 export interface CreateProductPayload {
@@ -12,14 +17,14 @@ export interface CreateProductPayload {
   auctionRelated?: boolean
 }
 
-/** Raw document from Appwrite listDocuments (attributes as returned by API). */
+/** Raw document/row from Appwrite (attributes as returned by API). */
 export interface AppwriteProductDocument {
   $id: string
-  $collectionId: string
-  $databaseId: string
+  $collectionId?: string
+  $databaseId?: string
   $createdAt: string
   $updatedAt: string
-  $permissions: string[]
+  $permissions?: string[]
   name: string
   brand: string
   price: number
@@ -35,19 +40,23 @@ export interface AppwriteProductListResponse {
 }
 
 export class AppwriteProductDataSource {
+  /**
+   * Uses Tables DB API (/tablesdb/.../rows) because the database is type "tablesdb".
+   * The Databases SDK (/databases/collections/documents) does not work with tablesdb databases.
+   */
   async listDocuments(): Promise<AppwriteProductListResponse> {
-    const response = await databases.listDocuments<AppwriteProductDocument>(
+    const response = await tablesDbListRows<AppwriteProductDocument>(
       AVORA_DATABASE_ID,
       PRODUCTS_COLLECTION_ID
     )
     return {
       total: response.total,
-      documents: (response.documents ?? []) as AppwriteProductDocument[],
+      documents: response.rows,
     }
   }
 
   async createDocument(data: CreateProductPayload): Promise<AppwriteProductDocument> {
-    const doc = await databases.createDocument<AppwriteProductDocument>(
+    const doc = await databases.createDocument<Models.Document>(
       AVORA_DATABASE_ID,
       PRODUCTS_COLLECTION_ID,
       ID.unique(),

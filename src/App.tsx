@@ -6,6 +6,8 @@ import {
   AuctionDetailsPage,
   ParticipationRequestsPage,
 } from '@/features/auction/presentation'
+import { CategoriesPage } from '@/features/categories/presentation'
+import { UsersPage } from '@/features/users/presentation'
 import { SystemConfigurationsPage } from '@/features/settings/presentation'
 import {
   LoginForm,
@@ -23,7 +25,9 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="auction" element={<AuctionPage />} />
           <Route path="auction/:id" element={<AuctionDetailsPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
           <Route path="auction/:id/participation-requests" element={<ParticipationRequestsPage />} />
+          <Route path="users" element={<UsersPage />} />
           <Route path="settings/system-configurations" element={<SystemConfigurationsPage />} />
         </Route>
       </Route>

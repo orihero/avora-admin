@@ -6,6 +6,8 @@
     "groupSettings": "НАСТРОЙКИ",
     "analytics": "Аналитика",
     "auction": "Аукцион",
+    "categories": "Категории",
+    "users": "Пользователи",
     "participationRequests": "Заявки на участие",
     "systemConfigurations": "Системные настройки"
   },
@@ -35,6 +37,9 @@
     "auctionsIllustrationAlt": "Иллюстрация данных аукционов",
     "breadcrumbData": "Данные",
     "breadcrumbAuctions": "Аукционы",
+    "categories": "Категории",
+    "breadcrumbCategories": "Категории",
+    "categoriesIllustrationAlt": "Иллюстрация категорий",
     "systemConfigurations": "Системные настройки",
     "breadcrumbSettings": "Настройки",
     "breadcrumbSystemConfigurations": "Системные настройки",
@@ -63,6 +68,21 @@
     "auctionDetailsWinnerStatus_payment_failed": "Ошибка оплаты",
     "auctionDetailsWinnerStatus_unreachable": "Недоступен",
     "participationRequests": "Заявки на участие",
-    "participationRequestsIllustrationAlt": "Иллюстрация заявок на участие"
+    "participationRequestsIllustrationAlt": "Иллюстрация заявок на участие",
+    "users": "Пользователи",
+    "breadcrumbUsers": "Пользователи",
+    "usersIllustrationAlt": "Иллюстрация пользователей",
+    "usersCreateUser": "Создать пользователя",
+    "usersEditUser": "Редактировать пользователя",
+    "usersDeleteUser": "Удалить пользователя",
+    "usersPhoneNumber": "Номер телефона",
+    "usersRole": "Роль",
+    "usersFirstName": "Имя",
+    "usersLastName": "Фамилия",
+    "usersDateOfBirth": "Дата рождения",
+    "usersAvatarUrl": "URL аватара",
+    "usersRoleAdmin": "Админ",
+    "usersRoleUser": "Пользователь",
+    "usersDeleteConfirm": "Вы уверены, что хотите удалить этого пользователя?"
   }
 }

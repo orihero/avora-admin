@@ -34,6 +34,16 @@ export const sidebarNav: NavGroup[] = [
         icon: 'hugeicons:auction',
         path: '/auction',
       },
+      {
+        label: 'nav.categories',
+        icon: 'tabler:category',
+        path: '/categories',
+      },
+      {
+        label: 'nav.users',
+        icon: 'hugeicons:user',
+        path: '/users',
+      },
     ],
   },
   {

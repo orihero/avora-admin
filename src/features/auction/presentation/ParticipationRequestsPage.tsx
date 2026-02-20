@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/core/components'
 import { useAuction } from './hooks'
 import { ParticipationRequestsTable } from './components/ParticipationRequestsTable'
-import chartImage from '../assets/chart.svg'
+import usersImage from '../assets/users.svg'
 
 export function ParticipationRequestsPage() {
   const { id } = useParams<{ id: string }>()
@@ -56,7 +56,7 @@ export function ParticipationRequestsPage() {
           { label: auction.title, path: `/auction/${auction.id}` },
           { label: t('pages.participationRequests') },
         ]}
-        illustrationSrc={chartImage}
+        illustrationSrc={usersImage}
         illustrationAlt={t('pages.participationRequestsIllustrationAlt')}
       />
       <ParticipationRequestsTable auctionId={id} />

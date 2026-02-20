@@ -1,5 +1,10 @@
-import { ID, Query } from 'appwrite'
-import { databases, AVORA_DATABASE_ID, AUCTION_PRODUCTS_COLLECTION_ID } from '@/core/appwrite/client'
+import { ID, Query, type Models } from 'appwrite'
+import {
+  databases,
+  tablesDbListRows,
+  AVORA_DATABASE_ID,
+  AUCTION_PRODUCTS_COLLECTION_ID,
+} from '@/core/appwrite/client'
 
 /** Payload for creating an auction_product document (Appwrite adds $id, $createdAt, $updatedAt). */
 export interface CreateAuctionProductPayload {
@@ -11,14 +16,14 @@ export interface CreateAuctionProductPayload {
   price_increment_presets?: string[]
 }
 
-/** Raw document from Appwrite createDocument (attributes as returned by API). */
+/** Raw document/row from Appwrite (attributes as returned by API). */
 export interface AppwriteAuctionProductDocument {
   $id: string
-  $collectionId: string
-  $databaseId: string
+  $collectionId?: string
+  $databaseId?: string
   $createdAt: string
   $updatedAt: string
-  $permissions: string[]
+  $permissions?: string[]
   auction: string
   product: string
   sortOrder: number
@@ -33,20 +38,24 @@ export interface AppwriteAuctionProductListResponse {
 }
 
 export class AppwriteAuctionProductDataSource {
+  /**
+   * Uses Tables DB API (/tablesdb/.../rows) because the database is type "tablesdb".
+   * The Databases SDK (/databases/collections/documents) does not work with tablesdb databases.
+   */
   async listDocumentsByAuctionId(auctionId: string): Promise<AppwriteAuctionProductListResponse> {
-    const response = await databases.listDocuments<AppwriteAuctionProductDocument>(
+    const response = await tablesDbListRows<AppwriteAuctionProductDocument>(
       AVORA_DATABASE_ID,
       AUCTION_PRODUCTS_COLLECTION_ID,
       [Query.equal('auction', auctionId), Query.orderAsc('sortOrder')]
     )
     return {
       total: response.total,
-      documents: (response.documents ?? []) as AppwriteAuctionProductDocument[],
+      documents: response.rows,
     }
   }
 
   async createDocument(data: CreateAuctionProductPayload): Promise<AppwriteAuctionProductDocument> {
-    const doc = await databases.createDocument<AppwriteAuctionProductDocument>(
+    const doc = await databases.createDocument<Models.Document>(
       AVORA_DATABASE_ID,
       AUCTION_PRODUCTS_COLLECTION_ID,
       ID.unique(),
