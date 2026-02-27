@@ -17,6 +17,8 @@ export interface CreateProductDrawerProps {
   open: boolean
   onClose: () => void
   onSuccess: (productId: string, auctionRow: CreateProductDrawerAuctionRow) => void
+  /** Pre-fill price increment presets when adding product to auction (e.g. from system variable). */
+  defaultPriceIncrementPresets?: string[]
 }
 
 function AddPresetForm({
@@ -54,7 +56,7 @@ function AddPresetForm({
       <button
         type="button"
         onClick={handleAdd}
-        className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+        className={cn(inputBase, 'w-auto shrink-0')}
       >
         Add preset
       </button>
@@ -62,7 +64,7 @@ function AddPresetForm({
   )
 }
 
-function getInitialFormState(): {
+function getInitialFormState(defaultPresets: string[] = []): {
   name: string
   brand: string
   price: number
@@ -82,11 +84,16 @@ function getInitialFormState(): {
     categoryId: '',
     minBidPrice: 0,
     selectedForLive: false,
-    price_increment_presets: [],
+    price_increment_presets: [...defaultPresets],
   }
 }
 
-export function CreateProductDrawer({ open, onClose, onSuccess }: CreateProductDrawerProps) {
+export function CreateProductDrawer({
+  open,
+  onClose,
+  onSuccess,
+  defaultPriceIncrementPresets,
+}: CreateProductDrawerProps) {
   const [mounted, setMounted] = useState(false)
   const [form, setForm] = useState(getInitialFormState)
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -96,7 +103,7 @@ export function CreateProductDrawer({ open, onClose, onSuccess }: CreateProductD
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      setForm(getInitialFormState())
+      setForm(getInitialFormState(defaultPriceIncrementPresets ?? []))
       setValidationError(null)
       createProduct.reset()
       const t = requestAnimationFrame(() => setMounted(true))
@@ -109,7 +116,7 @@ export function CreateProductDrawer({ open, onClose, onSuccess }: CreateProductD
     return () => {
       document.body.style.overflow = ''
     }
-  }, [open])
+  }, [open, defaultPriceIncrementPresets])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -340,17 +347,46 @@ export function CreateProductDrawer({ open, onClose, onSuccess }: CreateProductD
                   <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
                     Price increment presets (value:label)
                   </label>
-                  <ul className="mb-1 space-y-1">
+                  <ul className="mb-1 space-y-2">
                     {form.price_increment_presets.map((entry, presetIndex) => {
-                      const [v, l] = entry.split(':')
+                      const [v = '', l = ''] = entry.split(':')
                       return (
                         <li
                           key={presetIndex}
-                          className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"
+                          className="flex flex-wrap items-center gap-2"
                         >
-                          <span>
-                            {v}: {l}
-                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            placeholder="Value"
+                            value={v}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              setForm((f) => ({
+                                ...f,
+                                price_increment_presets: f.price_increment_presets.map((ent, j) =>
+                                  j === presetIndex ? `${val}:${l}` : ent
+                                ),
+                              }))
+                            }}
+                            className={cn(inputBase, 'w-20')}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Label"
+                            value={l}
+                            onChange={(e) => {
+                              const lbl = e.target.value
+                              setForm((f) => ({
+                                ...f,
+                                price_increment_presets: f.price_increment_presets.map((ent, j) =>
+                                  j === presetIndex ? `${v}:${lbl}` : ent
+                                ),
+                              }))
+                            }}
+                            className={cn(inputBase, 'min-w-0 flex-1')}
+                          />
                           <button
                             type="button"
                             onClick={() =>
@@ -361,10 +397,10 @@ export function CreateProductDrawer({ open, onClose, onSuccess }: CreateProductD
                                 ),
                               }))
                             }
-                            className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-red-600 dark:hover:bg-slate-600"
+                            className={cn(inputBase, 'w-9 shrink-0 p-0 flex items-center justify-center text-slate-500 hover:text-red-600 dark:hover:text-slate-400 dark:hover:text-red-400')}
                             aria-label="Remove preset"
                           >
-                            <Icon icon="material-symbols:close" className="h-3.5 w-3.5" />
+                            <Icon icon="material-symbols:close" className="h-4 w-4" />
                           </button>
                         </li>
                       )

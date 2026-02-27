@@ -13,6 +13,7 @@ import type {
   ParticipationRequestStatus,
 } from '@/features/auction/domain/entities'
 import { EmptyState } from '@/core/components'
+import { formatDateTime } from '@/core/utils'
 import { useAuthStore } from '@/features/auth/presentation/stores'
 
 const STATUS_OPTIONS: { value: '' | ParticipationRequestStatus; label: string }[] = [
@@ -27,18 +28,6 @@ const ORDER_BY_OPTIONS: { value: string; label: string }[] = [
   { value: 'reviewedAt', label: 'Reviewed at' },
   { value: 'status', label: 'Status' },
 ]
-
-function formatDateTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    })
-  } catch {
-    return iso
-  }
-}
 
 const columnHelper = createColumnHelper<ParticipationRequest>()
 

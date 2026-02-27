@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,17 +9,13 @@ import {
 import { Icon } from '@iconify/react'
 import { useVariables } from '../hooks'
 import type { Variable } from '@/features/settings/domain/entities'
+import { formatDateTime } from '@/core/utils'
 
-function formatDateTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    })
-  } catch {
-    return iso
-  }
+const COLUMN_HEADER_KEYS: Record<string, string> = {
+  key: 'pages.variablesColumnKey',
+  value: 'pages.variablesColumnValue',
+  feature: 'pages.variablesColumnFeature',
+  type: 'pages.variablesColumnType',
 }
 
 function formatCellValue(value: unknown): string {
@@ -27,9 +24,35 @@ function formatCellValue(value: unknown): string {
   return String(value)
 }
 
+function formatFeaturesValue(value: unknown): string {
+  if (value === null || value === undefined) return '—'
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '—'
+    const names = value.map((item) => {
+      if (typeof item === 'string') return item
+      if (item !== null && typeof item === 'object' && 'name' in item && typeof (item as { name: unknown }).name === 'string') {
+        return (item as { name: string }).name
+      }
+      return '—'
+    })
+    return names.filter(Boolean).join(', ')
+  }
+  if (typeof value === 'object' && value !== null && 'name' in value && typeof (value as { name: unknown }).name === 'string') {
+    return (value as { name: string }).name
+  }
+  if (typeof value === 'object' && value !== null && 'features' in value && Array.isArray((value as { features: unknown }).features)) {
+    return formatFeaturesValue((value as { features: unknown[] }).features)
+  }
+  return formatCellValue(value)
+}
+
 const columnHelper = createColumnHelper<Variable>()
 
+const PREFERRED_ORDER = ['key', 'value', 'feature', 'type']
+const HIDDEN_ATTRIBUTE_KEYS = ['$sequence', 'id']
+
 export function VariablesTable() {
+  const { t } = useTranslation()
   const { data, isLoading, isError, error, refetch } = useVariables()
 
   const variables = data?.variables ?? []
@@ -37,46 +60,47 @@ export function VariablesTable() {
     const set = new Set<string>()
     for (const v of variables) {
       for (const key of Object.keys(v.attributes)) {
-        set.add(key)
+        if (!HIDDEN_ATTRIBUTE_KEYS.includes(key)) set.add(key)
       }
     }
-    return Array.from(set).sort()
+    const ordered: string[] = []
+    for (const key of PREFERRED_ORDER) {
+      if (set.has(key)) ordered.push(key)
+    }
+    const rest = Array.from(set).filter((k) => !PREFERRED_ORDER.includes(k)).sort()
+    return [...ordered, ...rest]
   }, [variables])
 
   const columns = useMemo(() => {
-    const cols = [
-      columnHelper.accessor('id', {
-        header: 'ID',
-        cell: (info) => (
-          <span className="font-mono text-xs text-slate-700 dark:text-slate-300">{info.getValue()}</span>
+    const attributeColumns = attributeKeys.map((key) =>
+      columnHelper.display({
+        id: `attr_${key}`,
+        header: COLUMN_HEADER_KEYS[key] ? t(COLUMN_HEADER_KEYS[key]) : key,
+        cell: ({ row }) => (
+          <span className="text-slate-700 dark:text-slate-300">
+            {key === 'features' || key === 'feature'
+              ? formatFeaturesValue(row.original.attributes[key])
+              : formatCellValue(row.original.attributes[key])}
+          </span>
         ),
-      }),
+      })
+    )
+    return [
+      ...attributeColumns,
       columnHelper.accessor('createdAt', {
-        header: 'Created at',
+        header: t('pages.variablesCreatedAt'),
         cell: (info) => (
           <span className="text-slate-700 dark:text-slate-300">{formatDateTime(info.getValue())}</span>
         ),
       }),
       columnHelper.accessor('updatedAt', {
-        header: 'Updated at',
+        header: t('pages.variablesUpdatedAt'),
         cell: (info) => (
           <span className="text-slate-700 dark:text-slate-300">{formatDateTime(info.getValue())}</span>
         ),
       }),
-      ...attributeKeys.map((key) =>
-        columnHelper.display({
-          id: `attr_${key}`,
-          header: key,
-          cell: ({ row }) => (
-            <span className="text-slate-700 dark:text-slate-300">
-              {formatCellValue(row.original.attributes[key])}
-            </span>
-          ),
-        })
-      ),
     ]
-    return cols
-  }, [attributeKeys])
+  }, [attributeKeys, t])
 
   const table = useReactTable({
     data: variables,
@@ -87,7 +111,7 @@ export function VariablesTable() {
   if (isError) {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200">
-        <p className="font-medium">Failed to load system configurations</p>
+        <p className="font-medium">{t('pages.variablesLoadError')}</p>
         <p className="text-sm">{error?.message}</p>
       </div>
     )
@@ -96,14 +120,14 @@ export function VariablesTable() {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Variables</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('pages.variablesTitle')}</h2>
         <button
           type="button"
           onClick={() => refetch()}
           className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
         >
           <Icon icon="material-symbols:refresh" className="h-5 w-5" />
-          Refresh
+          {t('pages.variablesRefresh')}
         </button>
       </div>
 
@@ -130,7 +154,7 @@ export function VariablesTable() {
                   colSpan={columns.length}
                   className="py-12 text-center text-slate-500 dark:text-slate-400"
                 >
-                  Loading...
+                  {t('pages.variablesLoading')}
                 </td>
               </tr>
             ) : table.getRowModel().rows.length === 0 ? (
@@ -139,7 +163,7 @@ export function VariablesTable() {
                   colSpan={columns.length}
                   className="py-12 text-center text-slate-500 dark:text-slate-400"
                 >
-                  No variables found.
+                  {t('pages.variablesEmpty')}
                 </td>
               </tr>
             ) : (
@@ -162,7 +186,7 @@ export function VariablesTable() {
 
       {!isLoading && variables.length > 0 && (
         <div className="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
-          {data?.total ?? variables.length} {data?.total === 1 ? 'row' : 'rows'}
+          {data?.total ?? variables.length} {data?.total === 1 ? t('pages.variablesRow') : t('pages.variablesRows')}
         </div>
       )}
     </div>

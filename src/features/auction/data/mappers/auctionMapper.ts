@@ -8,6 +8,7 @@ export function mapAuctionDocumentDTOToEntity(dto: AuctionDocumentDTO): Auction 
     description: dto.description ?? null,
     startAt: dto.startAt,
     votingEndAt: dto.votingEndAt,
+    liveAuctionStartAt: dto.liveAuctionStartAt ?? null,
     status: dto.status,
     progress: dto.progress,
     pausedAt: dto.pausedAt ?? null,

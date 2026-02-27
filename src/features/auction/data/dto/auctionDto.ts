@@ -27,6 +27,7 @@ export const AuctionDocumentDTOSchema = z.object({
   description: z.string().nullable().optional(),
   startAt: z.string(),
   votingEndAt: z.string(),
+  liveAuctionStartAt: z.string().nullable().optional(),
   status: auctionStatusEnum,
   progress: auctionProgressEnum,
   pausedAt: z.string().nullable().optional(),

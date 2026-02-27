@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/core/components'
 import usersImage from '@/features/auction/assets/users.svg'
+import { UsersTable } from './components/UsersTable'
 
 export function UsersPage() {
   const { t } = useTranslation()
@@ -15,7 +16,9 @@ export function UsersPage() {
         illustrationSrc={usersImage}
         illustrationAlt={t('pages.usersIllustrationAlt')}
       />
-      {/* UsersTable will be added in presentation step */}
+      <div className="mt-6">
+        <UsersTable />
+      </div>
     </div>
   )
 }

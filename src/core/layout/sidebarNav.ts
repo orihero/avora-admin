@@ -40,6 +40,11 @@ export const sidebarNav: NavGroup[] = [
         path: '/categories',
       },
       {
+        label: 'nav.products',
+        icon: 'tabler:package',
+        path: '/products',
+      },
+      {
         label: 'nav.users',
         icon: 'hugeicons:user',
         path: '/users',

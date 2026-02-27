@@ -7,6 +7,7 @@ export interface CreateAuctionParams {
   description: string | null
   startAt: string
   votingEndAt: string
+  liveAuctionStartAt: string | null
   status: AuctionStatus
   progress: AuctionProgress
 }
@@ -22,7 +23,7 @@ export interface ListAuctionsParams {
   progress?: string
   /** Search in title (case-insensitive contains) */
   titleSearch?: string
-  /** Sort field: e.g. startAt, votingEndAt, title, status, progress */
+  /** Sort field: e.g. startAt, votingEndAt, liveAuctionStartAt, title, status, progress */
   orderBy?: string
   /** Sort direction */
   orderDesc?: boolean

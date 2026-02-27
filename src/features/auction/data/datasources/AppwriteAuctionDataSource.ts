@@ -8,6 +8,7 @@ export interface CreateAuctionPayload {
   description?: string | null
   startAt: string
   votingEndAt: string
+  liveAuctionStartAt?: string | null
   status: string
   progress: string
   pausedAt?: string | null
@@ -26,6 +27,7 @@ export interface AppwriteAuctionDocument {
   description?: string | null
   startAt: string
   votingEndAt: string
+  liveAuctionStartAt?: string | null
   status: string
   progress: string
   pausedAt?: string | null
@@ -101,6 +103,7 @@ export class AppwriteAuctionDataSource {
         description: data.description ?? null,
         startAt: data.startAt,
         votingEndAt: data.votingEndAt,
+        liveAuctionStartAt: data.liveAuctionStartAt ?? null,
         status: data.status,
         progress: data.progress,
         pausedAt: data.pausedAt ?? null,
@@ -120,6 +123,7 @@ export class AppwriteAuctionDataSource {
         description: data.description ?? null,
         startAt: data.startAt,
         votingEndAt: data.votingEndAt,
+        liveAuctionStartAt: data.liveAuctionStartAt ?? null,
         status: data.status,
         progress: data.progress,
         pausedAt: data.pausedAt ?? null,

@@ -1,18 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Auction } from '@/features/auction/domain/entities'
 import type { AuctionStats } from '@/features/auction/domain/repositories'
-
-function formatDateTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    })
-  } catch {
-    return iso
-  }
-}
+import { formatDateTime } from '@/core/utils'
 
 export interface AuctionDetailsSidebarProps {
   auction: Auction
@@ -59,6 +48,16 @@ export function AuctionDetailsSidebar({
           </dt>
           <dd className="mt-0.5 text-slate-900 dark:text-slate-100">
             {formatDateTime(auction.votingEndAt)}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-medium text-slate-500 dark:text-slate-400">
+            {t('pages.auctionDetailsLiveAuctionStartDate')}
+          </dt>
+          <dd className="mt-0.5 text-slate-900 dark:text-slate-100">
+            {auction.liveAuctionStartAt
+              ? formatDateTime(auction.liveAuctionStartAt)
+              : '—'}
           </dd>
         </div>
         <div>

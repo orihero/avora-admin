@@ -61,7 +61,7 @@ export function DeleteUserModal({
               'disabled:opacity-50 disabled:pointer-events-none'
             )}
           >
-            Cancel
+            {t('pages.usersCancel')}
           </button>
           <button
             type="button"
@@ -76,12 +76,12 @@ export function DeleteUserModal({
             {isDeleting ? (
               <>
                 <Icon icon="material-symbols:progress-activity" className="h-5 w-5 animate-spin" />
-                Deleting...
+                {t('pages.usersDeleting')}
               </>
             ) : (
               <>
                 <Icon icon="material-symbols:delete" className="h-5 w-5" />
-                Delete
+                {t('pages.usersDeleteButton')}
               </>
             )}
           </button>

@@ -23,6 +23,7 @@ export interface Auction {
   description: string | null
   startAt: string
   votingEndAt: string
+  liveAuctionStartAt: string | null
   status: AuctionStatus
   progress: AuctionProgress
   pausedAt: string | null

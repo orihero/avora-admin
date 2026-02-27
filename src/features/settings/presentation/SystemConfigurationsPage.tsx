@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/core/components'
 import { VariablesTable } from './components/VariablesTable'
+import settingsImage from '../assets/settings.svg'
 
 export function SystemConfigurationsPage() {
   const { t } = useTranslation()
@@ -12,6 +13,8 @@ export function SystemConfigurationsPage() {
           { label: t('pages.breadcrumbSettings'), path: '/' },
           { label: t('pages.breadcrumbSystemConfigurations') },
         ]}
+        illustrationSrc={settingsImage}
+        illustrationAlt={t('pages.systemConfigurationsIllustrationAlt')}
       />
       <VariablesTable />
     </div>

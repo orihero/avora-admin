@@ -15,6 +15,7 @@ import { EditAuctionDrawer } from './EditAuctionDrawer'
 import { DeleteAuctionModal } from './DeleteAuctionModal'
 import type { Auction, AuctionStatus, AuctionProgress } from '@/features/auction/domain/entities'
 import { EmptyState } from '@/core/components'
+import { formatDateTime } from '@/core/utils'
 
 const STATUS_OPTIONS: { value: '' | AuctionStatus; label: string }[] = [
   { value: '', label: 'All' },
@@ -38,22 +39,11 @@ const PROGRESS_OPTIONS: { value: '' | AuctionProgress; label: string }[] = [
 const ORDER_BY_OPTIONS: { value: string; label: string }[] = [
   { value: 'startAt', label: 'Start' },
   { value: 'votingEndAt', label: 'Voting end' },
+  { value: 'liveAuctionStartAt', label: 'Live auction start' },
   { value: 'title', label: 'Title' },
   { value: 'status', label: 'Status' },
   { value: 'progress', label: 'Progress' },
 ]
-
-function formatDateTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    })
-  } catch {
-    return iso
-  }
-}
 
 const columnHelper = createColumnHelper<Auction>()
 
@@ -116,6 +106,17 @@ export function AuctionsTable() {
         cell: (info) => (
           <span className="text-slate-700 dark:text-slate-300">{formatDateTime(info.getValue())}</span>
         ),
+      }),
+      columnHelper.accessor('liveAuctionStartAt', {
+        header: 'Live auction start',
+        cell: (info) => {
+          const value = info.getValue()
+          return (
+            <span className="text-slate-700 dark:text-slate-300">
+              {value ? formatDateTime(value) : '—'}
+            </span>
+          )
+        },
       }),
       columnHelper.display({
         id: 'actions',

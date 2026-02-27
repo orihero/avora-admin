@@ -1,12 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Icon } from '@iconify/react'
-import { cn, SearchableSelect } from '@/core/components'
+import { cn, DateTimeField } from '@/core/components'
 import { useCreateAuctionWithProducts } from '../hooks'
 import { useProducts } from '@/features/products'
+import { useVariables } from '@/features/settings/presentation/hooks'
 import type { Product } from '@/features/products/domain/entities'
 import type { AuctionStatus, AuctionProgress } from '@/features/auction/domain/entities'
 import type { CreateAuctionParams } from '@/features/auction/domain/repositories'
-import { CreateProductDrawer } from './CreateProductDrawer'
+import type { Variable } from '@/features/settings/domain/entities'
+import { SelectAuctionProductsModal } from './SelectAuctionProductsModal'
+
+const DEFAULT_AUCTION_START_TIME_KEY = 'default_auction_start_time'
+const DEFAULT_VOTING_END_TIME_KEY = 'default_voting_end_time'
+const DEFAULT_AUCTION_LIVE_START_TIME_KEY = 'default_auction_live_start_time'
 
 const inputBase =
   'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500'
@@ -44,11 +50,67 @@ function toLocalDateTime(iso: string): string {
   }
 }
 
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
 const defaultStart = () => toLocalDateTime(new Date().toISOString())
 const defaultVotingEnd = () => {
   const d = new Date()
   d.setDate(d.getDate() + 7)
   return toLocalDateTime(d.toISOString())
+}
+
+/** Parse time-only from variable value (HH:mm or HH:mm:ss) or extract from ISO string; no timezone conversion. */
+function parseTimeFromVariable(raw: string): string {
+  const s = raw.trim()
+  if (!s) return ''
+  const timeOnlyMatch = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+  if (timeOnlyMatch) {
+    const h = Math.min(23, Math.max(0, parseInt(timeOnlyMatch[1], 10)))
+    const m = Math.min(59, Math.max(0, parseInt(timeOnlyMatch[2], 10)))
+    return `${pad2(h)}:${pad2(m)}`
+  }
+  const isoTimeMatch = s.match(/T(\d{1,2}):(\d{2})/)
+  if (isoTimeMatch) {
+    const h = Math.min(23, Math.max(0, parseInt(isoTimeMatch[1], 10)))
+    const m = Math.min(59, Math.max(0, parseInt(isoTimeMatch[2], 10)))
+    return `${pad2(h)}:${pad2(m)}`
+  }
+  return ''
+}
+
+/** Build YYYY-MM-DDTHH:mm from a local date and HH:mm time string. */
+function buildLocalDateTime(date: Date, timeHHmm: string): string {
+  const y = date.getFullYear()
+  const mo = date.getMonth() + 1
+  const d = date.getDate()
+  return `${y}-${pad2(mo)}-${pad2(d)}T${timeHHmm}`
+}
+
+function getDefaultDatetimesFromVariables(variables: Variable[]): {
+  startAt: string
+  votingEndAt: string
+  liveAuctionStartAt: string
+} {
+  const getTime = (key: string): string => {
+    const v = variables.find((x) => x.id === key || x.attributes?.key === key)
+    const raw = v?.attributes?.value
+    if (typeof raw !== 'string') return ''
+    return parseTimeFromVariable(raw)
+  }
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const inSevenDays = new Date(today)
+  inSevenDays.setDate(inSevenDays.getDate() + 7)
+
+  const startTime = getTime(DEFAULT_AUCTION_START_TIME_KEY)
+  const votingEndTime = getTime(DEFAULT_VOTING_END_TIME_KEY)
+  const liveStartTime = getTime(DEFAULT_AUCTION_LIVE_START_TIME_KEY)
+
+  return {
+    startAt: startTime ? buildLocalDateTime(today, startTime) : defaultStart(),
+    votingEndAt: votingEndTime ? buildLocalDateTime(inSevenDays, votingEndTime) : defaultVotingEnd(),
+    liveAuctionStartAt: liveStartTime ? buildLocalDateTime(today, liveStartTime) : '',
+  }
 }
 
 function AddPresetForm({
@@ -86,7 +148,7 @@ function AddPresetForm({
       <button
         type="button"
         onClick={handleAdd}
-        className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+        className={cn(inputBase, 'w-auto shrink-0')}
       >
         Add preset
       </button>
@@ -107,11 +169,16 @@ export interface AuctionProductRow {
   price_increment_presets: string[]
 }
 
-function getInitialFormState(): {
+function getInitialFormState(defaults?: {
+  startAt: string
+  votingEndAt: string
+  liveAuctionStartAt: string
+}): {
   title: string
   description: string
   startAt: string
   votingEndAt: string
+  liveAuctionStartAt: string
   status: AuctionStatus
   progress: AuctionProgress
   products: AuctionProductRow[]
@@ -119,8 +186,9 @@ function getInitialFormState(): {
   return {
     title: '',
     description: '',
-    startAt: defaultStart(),
-    votingEndAt: defaultVotingEnd(),
+    startAt: defaults?.startAt ?? defaultStart(),
+    votingEndAt: defaults?.votingEndAt ?? defaultVotingEnd(),
+    liveAuctionStartAt: defaults?.liveAuctionStartAt ?? '',
     status: 'draft' as AuctionStatus,
     progress: 'voting_open' as AuctionProgress,
     products: [],
@@ -131,18 +199,19 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
   const [mounted, setMounted] = useState(false)
   const [form, setForm] = useState(getInitialFormState)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [addProductDropdownOpen, setAddProductDropdownOpen] = useState(false)
-  const [createProductDrawerOpen, setCreateProductDrawerOpen] = useState(false)
-  const addProductAnchorRef = useRef<HTMLDivElement>(null)
+  const [selectProductsModalOpen, setSelectProductsModalOpen] = useState(false)
 
   const createAuctionWithProducts = useCreateAuctionWithProducts()
   const { data: productsData, isLoading: productsLoading } = useProducts()
+  const { data: variablesData } = useVariables()
   const products = productsData?.products ?? []
+  const variables = variablesData?.variables ?? []
 
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      setForm(getInitialFormState())
+      const defaultDatetimes = getDefaultDatetimesFromVariables(variables)
+      setForm(getInitialFormState(defaultDatetimes))
       setValidationError(null)
       createAuctionWithProducts.reset()
       const t = requestAnimationFrame(() => setMounted(true))
@@ -169,10 +238,7 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
 
     const startAt = toISO(form.startAt)
     const votingEndAt = toISO(form.votingEndAt)
-    if (new Date(votingEndAt) <= new Date(startAt)) {
-      setValidationError('Voting end must be after start.')
-      return
-    }
+    const liveAuctionStartAt = form.liveAuctionStartAt ? toISO(form.liveAuctionStartAt) : null
 
     for (const row of form.products) {
       if (!row.productId.trim()) {
@@ -190,6 +256,7 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
       description: form.description.trim() || null,
       startAt,
       votingEndAt,
+      liveAuctionStartAt,
       status: form.status,
       progress: form.progress,
     }
@@ -226,27 +293,6 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
         },
       ],
     }))
-  }
-
-  const handleSelectProduct = (productId: string) => {
-    addProductRow(productId, {
-      minBidPrice: 0,
-      selectedForLive: false,
-      price_increment_presets: [],
-    })
-    setAddProductDropdownOpen(false)
-  }
-
-  const handleCreateProductSuccess = (
-    productId: string,
-    auctionRow: {
-      minBidPrice: number
-      selectedForLive: boolean
-      price_increment_presets: string[]
-    }
-  ) => {
-    addProductRow(productId, auctionRow)
-    setCreateProductDrawerOpen(false)
   }
 
   const removeProduct = (index: number) => {
@@ -379,11 +425,9 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
               <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
                 Start at <span className="text-red-500">*</span>
               </label>
-              <input
-                type="datetime-local"
+              <DateTimeField
                 value={form.startAt}
-                onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))}
-                className={inputBase}
+                onChange={(v) => setForm((f) => ({ ...f, startAt: v }))}
                 required
               />
             </div>
@@ -392,12 +436,20 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
               <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
                 Voting end at <span className="text-red-500">*</span>
               </label>
-              <input
-                type="datetime-local"
+              <DateTimeField
                 value={form.votingEndAt}
-                onChange={(e) => setForm((f) => ({ ...f, votingEndAt: e.target.value }))}
-                className={inputBase}
+                onChange={(v) => setForm((f) => ({ ...f, votingEndAt: v }))}
                 required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                Live auction start at
+              </label>
+              <DateTimeField
+                value={form.liveAuctionStartAt}
+                onChange={(v) => setForm((f) => ({ ...f, liveAuctionStartAt: v }))}
               />
             </div>
 
@@ -438,45 +490,21 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
             </div>
 
             {/* Auction products */}
-            <div className="relative border-t border-slate-200 pt-4 dark:border-slate-700">
+            <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Auction products
                 </h3>
-                <div ref={addProductAnchorRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setAddProductDropdownOpen(true)}
-                    disabled={productsLoading}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 disabled:opacity-50"
-                  >
-                    <Icon icon="material-symbols:add" className="h-4 w-4" />
-                    Add product
-                  </button>
-                  <SearchableSelect
-                    items={products.map((p: Product) => ({
-                      id: p.id,
-                      label: `${p.name} – ${p.brand} ($${p.price})`,
-                    }))}
-                    value={null}
-                    onSelect={handleSelectProduct}
-                    createNewOption={{ label: 'Create new product' }}
-                    onCreateNew={() => {
-                      setAddProductDropdownOpen(false)
-                      setCreateProductDrawerOpen(true)
-                    }}
-                    loading={productsLoading}
-                    placeholder="Search products..."
-                    emptyMessage="No products found"
-                    open={addProductDropdownOpen}
-                    onOpenChange={setAddProductDropdownOpen}
-                    anchorRef={addProductAnchorRef}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectProductsModalOpen(true)}
+                  disabled={productsLoading}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 disabled:opacity-50"
+                >
+                  <Icon icon="material-symbols:add" className="h-4 w-4" />
+                  Add product
+                </button>
               </div>
-              {productsLoading && !addProductDropdownOpen && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">Loading products...</p>
-              )}
               <ul className="mt-2 space-y-3">
                 {form.products.map((row, index) => (
                   <li
@@ -548,24 +576,51 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
                         <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">
                           Price increment presets (value:label)
                         </label>
-                        <ul className="mb-1 space-y-1">
+                        <ul className="mb-1 space-y-2">
                           {row.price_increment_presets.map((entry, presetIndex) => {
-                            const [v, l] = entry.split(':')
+                            const [v = '', l = ''] = entry.split(':')
                             return (
                               <li
                                 key={presetIndex}
-                                className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"
+                                className="flex flex-wrap items-center gap-2"
                               >
-                                <span>
-                                  {v}: {l}
-                                </span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  placeholder="Value"
+                                  value={v}
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    updateProduct(index, {
+                                      price_increment_presets: row.price_increment_presets.map(
+                                        (ent, j) => (j === presetIndex ? `${val}:${l}` : ent)
+                                      ),
+                                    })
+                                  }}
+                                  className={cn(inputBase, 'w-20')}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Label"
+                                  value={l}
+                                  onChange={(e) => {
+                                    const lbl = e.target.value
+                                    updateProduct(index, {
+                                      price_increment_presets: row.price_increment_presets.map(
+                                        (ent, j) => (j === presetIndex ? `${v}:${lbl}` : ent)
+                                      ),
+                                    })
+                                  }}
+                                  className={cn(inputBase, 'min-w-0 flex-1')}
+                                />
                                 <button
                                   type="button"
                                   onClick={() => removePreset(index, presetIndex)}
-                                  className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-red-600 dark:hover:bg-slate-600"
+                                  className={cn(inputBase, 'w-9 shrink-0 p-0 flex items-center justify-center text-slate-500 hover:text-red-600 dark:hover:text-slate-400 dark:hover:text-red-400')}
                                   aria-label="Remove preset"
                                 >
-                                  <Icon icon="material-symbols:close" className="h-3.5 w-3.5" />
+                                  <Icon icon="material-symbols:close" className="h-4 w-4" />
                                 </button>
                               </li>
                             )
@@ -611,10 +666,14 @@ export function CreateAuctionDrawer({ open, onClose, onSuccess }: CreateAuctionD
         </div>
       </div>
 
-      <CreateProductDrawer
-        open={createProductDrawerOpen}
-        onClose={() => setCreateProductDrawerOpen(false)}
-        onSuccess={handleCreateProductSuccess}
+      <SelectAuctionProductsModal
+        open={selectProductsModalOpen}
+        onClose={() => setSelectProductsModalOpen(false)}
+        products={products}
+        selectedRows={form.products}
+        onApply={(rows) => setForm((f) => ({ ...f, products: rows }))}
+        onProductCreated={addProductRow}
+        loading={productsLoading}
       />
     </>
   )

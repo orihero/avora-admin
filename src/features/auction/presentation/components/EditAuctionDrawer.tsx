@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icon } from '@iconify/react'
-import { cn } from '@/core/components'
+import { cn, DateTimeField } from '@/core/components'
 import { useUpdateAuction } from '../hooks'
 import type { Auction, AuctionStatus, AuctionProgress } from '@/features/auction/domain/entities'
 import type { UpdateAuctionParams } from '@/features/auction/domain/repositories'
@@ -55,6 +55,7 @@ function formStateFromAuction(auction: Auction | null) {
       description: '',
       startAt: '',
       votingEndAt: '',
+      liveAuctionStartAt: '',
       status: 'draft' as AuctionStatus,
       progress: 'voting_open' as AuctionProgress,
     }
@@ -64,6 +65,9 @@ function formStateFromAuction(auction: Auction | null) {
     description: auction.description ?? '',
     startAt: toLocalDateTime(auction.startAt),
     votingEndAt: toLocalDateTime(auction.votingEndAt),
+    liveAuctionStartAt: auction.liveAuctionStartAt
+      ? toLocalDateTime(auction.liveAuctionStartAt)
+      : '',
     status: auction.status,
     progress: auction.progress,
   }
@@ -114,16 +118,14 @@ export function EditAuctionDrawer({
 
     const startAt = toISO(form.startAt)
     const votingEndAt = toISO(form.votingEndAt)
-    if (new Date(votingEndAt) <= new Date(startAt)) {
-      setValidationError('Voting end must be after start.')
-      return
-    }
+    const liveAuctionStartAt = form.liveAuctionStartAt ? toISO(form.liveAuctionStartAt) : null
 
     const params: UpdateAuctionParams = {
       title,
       description: form.description.trim() || null,
       startAt,
       votingEndAt,
+      liveAuctionStartAt,
       status: form.status,
       progress: form.progress,
     }
@@ -228,11 +230,9 @@ export function EditAuctionDrawer({
               <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
                 Start at <span className="text-red-500">*</span>
               </label>
-              <input
-                type="datetime-local"
+              <DateTimeField
                 value={form.startAt}
-                onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))}
-                className={inputBase}
+                onChange={(v) => setForm((f) => ({ ...f, startAt: v }))}
                 required
               />
             </div>
@@ -241,12 +241,20 @@ export function EditAuctionDrawer({
               <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
                 Voting end at <span className="text-red-500">*</span>
               </label>
-              <input
-                type="datetime-local"
+              <DateTimeField
                 value={form.votingEndAt}
-                onChange={(e) => setForm((f) => ({ ...f, votingEndAt: e.target.value }))}
-                className={inputBase}
+                onChange={(v) => setForm((f) => ({ ...f, votingEndAt: v }))}
                 required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                Live auction start at
+              </label>
+              <DateTimeField
+                value={form.liveAuctionStartAt}
+                onChange={(v) => setForm((f) => ({ ...f, liveAuctionStartAt: v }))}
               />
             </div>
 

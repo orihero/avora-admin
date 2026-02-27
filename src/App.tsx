@@ -7,6 +7,7 @@ import {
   ParticipationRequestsPage,
 } from '@/features/auction/presentation'
 import { CategoriesPage } from '@/features/categories/presentation'
+import { ProductsPage } from '@/features/products/presentation'
 import { UsersPage } from '@/features/users/presentation'
 import { SystemConfigurationsPage } from '@/features/settings/presentation'
 import {
@@ -26,6 +27,7 @@ function App() {
           <Route path="auction" element={<AuctionPage />} />
           <Route path="auction/:id" element={<AuctionDetailsPage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="products" element={<ProductsPage />} />
           <Route path="auction/:id/participation-requests" element={<ParticipationRequestsPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="settings/system-configurations" element={<SystemConfigurationsPage />} />
